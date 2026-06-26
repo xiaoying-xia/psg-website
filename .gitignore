@@ -1,0 +1,16 @@
+# OS / editor
+.DS_Store
+*.swp
+
+# Local Claude Code config
+.claude/
+
+# Heavy + internal source material — do NOT publish
+Materials/
+*.heic
+*.pptx
+
+# Internal planning docs (contain DNS records, registration & strategy notes)
+REQUIREMENTS.md
+DESIGN.md
+README.md
