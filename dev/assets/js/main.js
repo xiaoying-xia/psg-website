@@ -26,16 +26,74 @@
 
   /* ---- Reveal on scroll ---- */
   var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var scrollDriven = !reduce && window.CSS && CSS.supports && CSS.supports("animation-timeline: view()");
   var revealEls = document.querySelectorAll(".reveal");
-  if (reduce || !("IntersectionObserver" in window)) {
+  if (reduce) {
+    revealEls.forEach(function (el) { el.classList.add("in"); });
+  } else if (scrollDriven) {
+    /* CSS scroll-linked animation drives the reveal — nothing to do here */
+  } else if (!("IntersectionObserver" in window)) {
     revealEls.forEach(function (el) { el.classList.add("in"); });
   } else {
+    // Reversible fade in/out for browsers without scroll-linked animations
     var io = new IntersectionObserver(function (entries) {
-      entries.forEach(function (e) {
-        if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); }
-      });
-    }, { threshold: 0.15 });
+      entries.forEach(function (e) { e.target.classList.toggle("in", e.isIntersecting); });
+    }, { threshold: 0.12, rootMargin: "0px 0px -8% 0px" });
     revealEls.forEach(function (el) { io.observe(el); });
+  }
+
+  /* ---- Momentum smooth scrolling (Lenis) ---- */
+  if (!reduce && window.Lenis) {
+    var lenis = new Lenis({ lerp: 0.085, wheelMultiplier: 1, smoothWheel: true });
+    (function raf(t) { lenis.raf(t); requestAnimationFrame(raf); })();
+    document.querySelectorAll('a[href^="#"]').forEach(function (a) {
+      a.addEventListener("click", function (e) {
+        var id = a.getAttribute("href");
+        if (id === "#" || id === "#top") { e.preventDefault(); lenis.scrollTo(0); }
+        else if (id.length > 1) {
+          var target = document.querySelector(id);
+          if (target) { e.preventDefault(); lenis.scrollTo(target, { offset: -80 }); closeMenu(); }
+        }
+      });
+    });
+  }
+
+  /* ---- Hero headline typewriter ---- */
+  var heroH1 = document.querySelector(".hero h1");
+  if (heroH1 && !reduce) {
+    var full = heroH1.textContent;
+    heroH1.style.minHeight = heroH1.offsetHeight + "px";   // reserve space, no reflow
+    heroH1.textContent = "";
+    var caret = document.createElement("span");
+    caret.className = "type-caret";
+    caret.setAttribute("aria-hidden", "true");
+    caret.textContent = "|";
+    heroH1.appendChild(caret);
+    var ci = 0;
+    (function typeNext() {
+      if (ci < full.length) {
+        var ch = full.charAt(ci++);
+        caret.insertAdjacentText("beforebegin", ch);
+        setTimeout(typeNext, ch === " " ? 78 : 60);
+      } else {
+        setTimeout(function () { caret.remove(); }, 1500);
+      }
+    })();
+  }
+
+  /* ---- Map: data-flow packets travelling Asia -> U.S. ---- */
+  var flowPaths = document.querySelectorAll(".global-flow path");
+  if (!reduce && flowPaths.length && flowPaths[0].getTotalLength) {
+    flowPaths.forEach(function (p, idx) {
+      var L = p.getTotalLength();
+      p.style.strokeDasharray = "6 " + L;
+      if (p.animate) {
+        p.animate(
+          [{ strokeDashoffset: 0 }, { strokeDashoffset: -(L + 6) }],
+          { duration: 3400 + idx * 130, iterations: Infinity, delay: idx * 360, easing: "linear" }
+        );
+      }
+    });
   }
 
   /* ---- Stat count-up ---- */
