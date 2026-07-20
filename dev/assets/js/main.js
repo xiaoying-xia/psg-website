@@ -165,23 +165,24 @@
       if (form._gotcha && form._gotcha.value) return; // honeypot tripped
       submit.disabled = true;
       submit.textContent = "Sending…";
-      var data = {
-        name: form.name.value,
-        email: form.email.value,
-        company: form.company.value,
-        message: form.message.value
-      };
-      fetch("/api/contact", {
+      fetch(form.action, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data)
+        headers: { "Accept": "application/json" },
+        body: new FormData(form)
       }).then(function (r) {
-        if (!r.ok) throw new Error("Request failed");
-        return r.json();
-      }).then(function () {
-        status.className = "form-status ok";
-        status.textContent = "Thank you — your message has been sent. We'll be in touch shortly.";
-        form.reset();
+        return r.json().then(function (data) { return { ok: r.ok, data: data }; });
+      }).then(function (res) {
+        if (res.ok) {
+          status.className = "form-status ok";
+          status.textContent = "Thank you — your message has been sent. We'll be in touch shortly.";
+          form.reset();
+        } else {
+          var msg = res.data && res.data.errors && res.data.errors.length
+            ? res.data.errors.map(function (x) { return x.message; }).join(" ")
+            : "Something went wrong. Please email us directly at info@psggroup.net.";
+          status.className = "form-status err";
+          status.textContent = msg;
+        }
       }).catch(function () {
         status.className = "form-status err";
         status.textContent = "Sorry, something went wrong. Please email us directly at info@psggroup.net.";
