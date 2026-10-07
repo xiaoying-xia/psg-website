@@ -1,0 +1,9 @@
+{
+  // Cloudflare Workers config — serves the static site in dev/ (used for branch previews).
+  "name": "psg-website",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./dev"
+  },
+  "previews": {}
+}
