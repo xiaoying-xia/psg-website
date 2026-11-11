@@ -5,6 +5,21 @@
   var y = document.getElementById("year");
   if (y) y.textContent = new Date().getFullYear();
 
+  /* ---- Arriving from another page with a #section: jump straight there
+     (no visible smooth-scroll from the top, no typewriter replay) ---- */
+  var landedOnHash = false;
+  if (location.hash.length > 1) {
+    var hashTarget = null;
+    try { hashTarget = document.querySelector(location.hash); } catch (err) { /* invalid selector */ }
+    if (hashTarget) {
+      landedOnHash = true;
+      var rootEl = document.documentElement;
+      rootEl.style.scrollBehavior = "auto";
+      hashTarget.scrollIntoView();
+      requestAnimationFrame(function () { rootEl.style.scrollBehavior = ""; });
+    }
+  }
+
   /* ---- Sticky header background on scroll ---- */
   var header = document.getElementById("header");
   function onScroll() {
@@ -60,7 +75,7 @@
 
   /* ---- Hero headline typewriter ---- */
   var heroH1 = document.querySelector(".hero h1");
-  if (heroH1 && !reduce) {
+  if (heroH1 && !reduce && !landedOnHash) {
     var full = heroH1.textContent;
     heroH1.style.minHeight = heroH1.offsetHeight + "px";   // reserve space, no reflow
     heroH1.textContent = "";
@@ -146,7 +161,7 @@
   if (lbNext) lbNext.addEventListener("click", function () { show(idx + 1); });
   if (lb) lb.addEventListener("click", function (e) { if (e.target === lb) closeLb(); });
   document.addEventListener("keydown", function (e) {
-    if (!lb.classList.contains("open")) return;
+    if (!lb || !lb.classList.contains("open")) return;
     if (e.key === "Escape") closeLb();
     else if (e.key === "ArrowLeft") show(idx - 1);
     else if (e.key === "ArrowRight") show(idx + 1);
